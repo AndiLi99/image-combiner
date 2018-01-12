@@ -9,7 +9,7 @@ Currently the network is trained to combine images from the MNIST dataset. In th
 
 # Demo
 
-
+![Demo.gif](http://gph.is/2FsBWjl)
 
 
 
