@@ -104,7 +104,7 @@ class Kernel:
     #   input_image_shape (3-tuple) - a 3 tuple for the shape of input images (num images, image height, image length)
     #   output_image_shape (3-tuple) - a 3 tuple for the shape of the output images (same format)
     #   z-activations (3D np array) - the previous non-squashed activations
-    #   deltas (3D np array) - the previous errors
+    #   deltas (2D np array) - the previous errors (for the single kernel)
     def get_errors(self, input_image_shape, output_image_shape, z_activations, deltas):
         deltaPrevs = []
         weightDeltas = []
