@@ -12,6 +12,7 @@ def func (z):
         z[i] = func(zi)
     return z
 
+# leaky relu derivative
 def func_deriv(z):
     if isinstance(z, float) or isinstance(z, int):
         if z > 0:
@@ -50,12 +51,12 @@ def prev_errors (in_shape, out_shape, zs, weights, bias, deltas):
                     deltasPrev[dpy][dpx] += d*weights[wy][wx]*func_deriv(zs[dpy][dpx])
 
     # Loop kernel across image to calculate grad_w
-    for y in range(in_shape[0]-kernelHeight+1):
-        for x in range(in_shape[1]-kernelLength+1):
+    for y in range(out_shape[0]-kernelHeight+1):
+        for x in range(out_shape[1]-kernelLength+1):
             # Calculate for one convolution
             for wy in range(kernelHeight):
                 for wx in range(kernelLength):
-                    weightDeltas[wy][wx] += func(zs[y+wy][x+wx])*deltasPrev[y+wy][x+wx]
+                    weightDeltas[wy][wx] += func(zs[y+wy][x+wx])*deltas[y+wy][x+wx]
 
     for dp in deltasPrev:
         for d in dp:
@@ -66,12 +67,14 @@ def prev_errors (in_shape, out_shape, zs, weights, bias, deltas):
 # Individual kernel objects
 class Kernel:
     # Args:
-    #   filter_size: a 3-tuple (kernel depth, kernel height, kernel length)
-    def __init__(self, filter_size, weights=None, bias=None):
-        self.filter_size = filter_size
-        self.feature_map_length = filter_size[2]
-        self.feature_map_height = filter_size[1]
-        self.num_feature_maps = filter_size[0]
+    #   kernel_size: a 3-tuple (kernel depth, kernel height, kernel length)
+    #   weights (optional): a 3D np array of the kernels weights
+    #   bias (optional): the kernels bias
+    def __init__(self, kernel_size, weights=None, bias=None):
+        self.kernel_size = kernel_size
+        self.feature_map_length = kernel_size[2]
+        self.feature_map_height = kernel_size[1]
+        self.num_feature_maps = kernel_size[0]
         if weights is not None:
             self.weights = weights
         else:
@@ -82,9 +85,9 @@ class Kernel:
         else:
             self.bias = np.random.random()
 
-    # Takes in a list of images and applies the filter specific to the object to the filter, returning the new 2D image
+    # Takes in a list of images and applies the kernel specific to the object to the kernel, returning the new 2D image
     # Args:
-    #   image_list: a list of 2D images
+    #   image_list: a list of 2D images (also known as the image)
     def use_kernel (self, image_list):
         num_images = len(image_list)
         new_image_size = (len(image_list[0]) - self.feature_map_height + 1, len(image_list[0][0]) - self.feature_map_length + 1)
@@ -104,17 +107,17 @@ class Kernel:
     #   deltas (3D np array) - the previous errors
     def get_errors(self, input_image_shape, output_image_shape, z_activations, deltas):
         deltaPrevs = []
-        weightErrors = []
-        biasError = 0
+        weightDeltas = []
+        biasDelta = 0
 
-        for w, z, i in zip(self.weights, z_activations, deltas):
+        for w, z in zip(self.weights, z_activations):
             w_err, b_err, d_err = prev_errors(input_image_shape[1:],output_image_shape[1:],
-                                  z,w,self.bias,d)
+                                  z,w,self.bias,deltas)
             deltaPrevs.append(d_err)
-            weightErrors.append(w_err)
-            biasError += b_err
+            weightDeltas.append(w_err)
+            biasDelta += b_err
 
-        return weightErrors, biasError, deltaPrevs
+        return weightDeltas, biasDelta, deltaPrevs
 
     # This method takes in a feature map and slides it across an image
     # Returns:
@@ -124,16 +127,16 @@ class Kernel:
         for x in range(new_image_size[1]):
             for y in range(new_image_size[0]):
                 img_piece = image[y:y+self.feature_map_height,x:x+self.feature_map_length]
-                print(np.dot(feature_map.ravel(), img_piece.ravel()))
+                #print(np.dot(feature_map.ravel(), img_piece.ravel()))
                 new_image[y][x] = np.dot(feature_map.ravel(), img_piece.ravel())
         return new_image
 
     # Updates the kernels weights and biases
-    #   weight_update (3D np arr) - what to add to the weights
-    #   bias_update (float) - what to add to the bias
-    def update (self, weight_update, bias_update):
-        self.weights += weight_update
-        self.bias += bias_update
+    #   d_weight (3D np arr) - what to add to the weights
+    #   d_bias (float) - what to add to the bias
+    def update (self, d_weight, d_bias):
+        self.weights += d_weight
+        self.bias += d_bias
 
     def set_weights(self, weights):
         self.weights = weights
