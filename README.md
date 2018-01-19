@@ -1,5 +1,5 @@
 # Update
-The autoencoder network is now fully convolutional, with deconvolutional layers used in order to reconstruct images. Included is now a dataset of faces in which the network is being trained on. The faces are of size (250x250), and can be accessed through the face_loader.py script, which will load the images into a 3D vector for input. There is also a class that is able to read URL's and automatically webscrape images.
+There is now a fully convolutional network available, with the possibility of dense layers if desired. The fully convolutional structure is achieved through deconvolutional layers used in order to reconstruct images. Included is now a dataset of faces in which the network is being trained on. The faces are of size (250x250), and can be accessed through the face_loader.py script, which will load the images into a 3D vector for input. There is also a class that is able to read URL's and automatically webscrape images.
 
 # image-combiner
 Autoencoder neural network built for combining images by encoding two separate images together and decoding the result.
